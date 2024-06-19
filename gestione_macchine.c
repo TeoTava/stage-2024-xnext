@@ -8,6 +8,19 @@ struct Macchina {
     float tensione, corrente;
 };
 
+void linee () {
+    int i, N=40;
+
+    for (i=0; i<N; i++) {
+        if (i!=N-1) {
+            printf("-");
+        }
+        else {
+            printf("-\n");
+        }
+    }
+}
+
 void clear_buffer () {
     int c;
     while ((c=getchar())!='\n' && c!= EOF);
@@ -111,9 +124,7 @@ char acq_char (int mess) {
     switch (mess) {
         case 1: printf("Vuoi visualizzare tutti i codici possibili? [Y/N]\n");
         break;
-        case 2: printf("Vuoi salvare le macchine non ancora registrate in memoria? [Y/N]\n");
-        break;
-        case 3: printf("Vuoi salvare quest'ultima macchina aggiunta in memoria? [Y/N]\n");
+        case 2: printf("Vuoi salvare quest'ultima macchina aggiunta in memoria? [Y/N]\n");
         break;
         default: printf("Fornisci un carattere letterale\n");
     }
@@ -152,17 +163,20 @@ char acq_char (int mess) {
 
 
 int main () {
-    int scelta, N, i=0, dim=10000, controllo=0;
+    int scelta, N, i=0, dim=10000, controllo=0, elementi_struct=4;
     struct Macchina M[dim];
     FILE *file_point;
     char file_memoria[21]="memoria_macchine.txt";
 
     while (controllo==0) {
         scelta=acq_int(4);
-        
+
+        linee();
+
         switch (scelta) {
             case 1: {
                 controllo=1;
+                N=0;
 
                 file_point=fopen(file_memoria, "r");
                 if (file_point==NULL) {
@@ -170,14 +184,22 @@ int main () {
                     break;
                 }
 
-                fscanf(file_point, "%d", &N);
+                while (fscanf(file_point, "%d %s %f %f", &M[i].codice, M[i].scopo, &M[i].tensione, &M[i].corrente)==elementi_struct) {
+                    i++;
+                    N++;
+                }
 
-                for (i=0; i<N; i++) {
-                    fscanf(file_point, "%d %s %f %f", &M[i].codice, M[i].scopo, &M[i].tensione, &M[i].corrente);
+                if (N==0) {
+                    printf("Impossibile riprendere i dati: il file di memoria non presenta alcun dato disponibile\nÈ necessario reimpostare i dati selezionando la 2a opzione dal menù\n");
+                    controllo=0;
+                }
+                else {
+                    printf("Valori ripristinati correttamente\n");
                 }
 
                 fclose(file_point);
-                printf("Valori ripristinati correttamente\n");
+
+                linee();
             }
             break; 
 
@@ -198,6 +220,8 @@ int main () {
                         M[i].corrente=acq_float(1);
                     } while (M[i].tensione<=0 || M[i].corrente<=0);
                 }
+
+                linee();
             }
             break;
             
@@ -210,6 +234,8 @@ int main () {
     do {
         scelta=acq_int(0);
 
+        linee();
+
         switch (scelta) {
             case 1: {
                 file_point = fopen (file_memoria, "w");
@@ -218,13 +244,15 @@ int main () {
                     break;
                 }
                 
-                fprintf(file_point, "%d\n", N);
                 for (i=0; i<N; i++) {
                     fprintf(file_point, "%d %s %f %f\n", M[i].codice, M[i].scopo, M[i].tensione, M[i].corrente);
                 }
 
+
                 fclose(file_point);
                 printf("Informazioni delle macchine salvate correttamente su \"%s\"\n", file_memoria);
+
+                linee();
             }
             break;
 
@@ -258,6 +286,8 @@ int main () {
                         break;
                     }
                 }
+
+                linee();
             }
             break;
 
@@ -278,7 +308,7 @@ int main () {
                     N++;
                 }
 
-                salva=acq_char(3);
+                salva=acq_char(2);
                 if (salva=='Y') {
                     file_point = fopen (file_memoria, "w");
                     if (file_point==NULL) {
@@ -286,7 +316,6 @@ int main () {
                         break;
                     }
                 
-                    fprintf(file_point, "%d\n", N);
                     for (i=0; i<N; i++) {
                         fprintf(file_point, "%d %s %f %f\n", M[i].codice, M[i].scopo, M[i].tensione, M[i].corrente);
                     }
@@ -294,6 +323,8 @@ int main () {
                     fclose(file_point);
                     printf("Informazioni delle macchine salvate correttamente su \"%s\"\n", file_memoria);
                 }
+
+                linee();
             }
             break;
 
@@ -319,6 +350,8 @@ int main () {
                         printf("    - Scopo: %s\n    - Tensione: %f V\n    - Corrente: %f A\n", M[i].scopo, M[i].tensione, M[i].corrente);
                     }
                 }
+
+                linee();
             }
             break;
 
@@ -328,9 +361,12 @@ int main () {
                 for (i=0; i<N; i++) {
                     printf("MACCHINA %d\n - Codice: %d\n - Scopo: %s\n - Tensione = %f V\n - Corrente = %f A\n", i+1, M[i].codice, M[i].scopo, M[i].tensione, M[i].corrente);
                 }
+
+                linee();
             }
+            break;
         }
-    } while (scelta!=6);
+    } while (scelta!=5);
 
     return 0;
 }
