@@ -30,7 +30,7 @@ int acq_int (int mess) {
     int x, risultato;
     
     switch (mess) {
-        case 0: printf("Scegliere un'opzione fornendo il numero:\n0. Visualizza tutte le macchine con tutte le informazioni\n1. Salvare le nuove macchine in memoria\n2. Visualizzare i dati di una macchina fornendo il codice\n3. Aggiungere una nuova macchina\n4. Visualizzare che macchina ha potenza maggiore\n5. Fine Programma\n");
+        case 0: printf("Scegliere un'opzione fornendo il numero:\n0. Visualizza tutte le macchine con tutte le informazioni\n1. Salvare le nuove macchine in memoria\n2. Cancellare una macchina a scelta dalla memoria\n3. Visualizzare i dati di una macchina fornendo il codice\n4. Aggiungere una nuova macchina\n5. Visualizzare che macchina ha potenza maggiore\n6. Fine Programma\n");
         break;
         case 1: printf("Fornisci il numero effettivo delle macchine [numero intero positivo]\n");
         break;
@@ -39,6 +39,8 @@ int acq_int (int mess) {
         case 3: printf("Fornisci codice della macchina nuova [numero intero]\n");
         break;
         case 4: printf("Scegliere tra le seguenti opzioni:\n1. Riprendere le macchine precedentemente salvate nella memoria\n2. Inserire macchine da zero\n");
+        break;
+        case 5: printf("Fornisci la riga da cancellare dal file [numero intero]\n");
         break;
         default: printf("Fornisci un valore intero\n");
     }
@@ -124,7 +126,7 @@ char acq_char (int mess) {
     switch (mess) {
         case 1: printf("Vuoi visualizzare tutti i codici possibili? [Y/N]\n");
         break;
-        case 2: printf("Vuoi salvare quest'ultima macchina aggiunta in memoria? [Y/N]\n");
+        case 2: printf("Vuoi salvare tutte le macchine compresa quest'ultima macchina aggiunta in memoria? [Y/N]\n");
         break;
         default: printf("Fornisci un carattere letterale\n");
     }
@@ -165,7 +167,7 @@ char acq_char (int mess) {
 int main () {
     int scelta, N, i=0, dim=10000, controllo=0, elementi_struct=4;
     struct Macchina M[dim];
-    FILE *file_point;
+    FILE *mem_point;
     char file_memoria[21]="memoria_macchine.txt";
 
     while (controllo==0) {
@@ -178,13 +180,14 @@ int main () {
                 controllo=1;
                 N=0;
 
-                file_point=fopen(file_memoria, "r");
-                if (file_point==NULL) {
-                    printf("Errore di apertura del file\n");
+                mem_point=fopen(file_memoria, "r");
+                if (mem_point==NULL) {
+                    printf("Errore di apertura del file: è necessario inserire tutti i valori con la scelta 2\n");
+                    controllo=0;
                     break;
                 }
 
-                while (fscanf(file_point, "%d %s %f %f", &M[i].codice, M[i].scopo, &M[i].tensione, &M[i].corrente)==elementi_struct) {
+                while (fscanf(mem_point, "%d %s %f %f", &M[i].codice, M[i].scopo, &M[i].tensione, &M[i].corrente)==elementi_struct) {
                     i++;
                     N++;
                 }
@@ -197,7 +200,7 @@ int main () {
                     printf("Valori ripristinati correttamente\n");
                 }
 
-                fclose(file_point);
+                fclose(mem_point);
 
                 linee();
             }
@@ -237,19 +240,30 @@ int main () {
         linee();
 
         switch (scelta) {
+            case 0: {
+                printf("Ci sono un totale di %d macchine\n", N);
+                
+                for (i=0; i<N; i++) {
+                    printf("MACCHINA %d\n - Codice: %d\n - Scopo: %s\n - Tensione = %f V\n - Corrente = %f A\n", i+1, M[i].codice, M[i].scopo, M[i].tensione, M[i].corrente);
+                }
+
+                linee();
+            }
+            break;
+            
             case 1: {
-                file_point = fopen (file_memoria, "w");
-                if (file_point==NULL) {
+                mem_point = fopen (file_memoria, "w");
+                if (mem_point==NULL) {
                     printf("Errore nell'apertura del file\n");
                     break;
                 }
                 
                 for (i=0; i<N; i++) {
-                    fprintf(file_point, "%d %s %f %f\n", M[i].codice, M[i].scopo, M[i].tensione, M[i].corrente);
+                    fprintf(mem_point, "%d %s %f %f\n", M[i].codice, M[i].scopo, M[i].tensione, M[i].corrente);
                 }
 
 
-                fclose(file_point);
+                fclose(mem_point);
                 printf("Informazioni delle macchine salvate correttamente su \"%s\"\n", file_memoria);
 
                 linee();
@@ -257,6 +271,97 @@ int main () {
             break;
 
             case 2: {
+                FILE *temp_point;
+                char file_temp[9] = "temp.txt", ch;
+                int canc, j=1, flag=0;
+                float grand_file;
+
+                mem_point = fopen (file_memoria, "r");
+                if (mem_point==NULL) {
+                    printf("Errore nell'apertura del file\n");
+                    break;
+                }
+                
+                fseek(mem_point, 0, SEEK_END);
+                grand_file=ftell(mem_point);
+                rewind(mem_point);
+
+                if (grand_file!=0) {
+                    printf("Contenuto attuale del file \"%s\" (numero all'inizio indica la riga del file, in ordine i valori sono per ogni macchina: codice, scopo, tensione, corrente):\n", file_memoria);
+                    printf("%d)   ", j);
+                    j++;
+                    ch=getc(mem_point);
+                    while (ch!=EOF) {
+                        if (j>N && ch=='\n') {
+                            printf("%c", ch);
+                        }
+                        else if (ch=='\n') {
+                            printf("\n%d)   ", j);
+                            j++;
+                        }
+                        else {
+                            printf("%c", ch);
+                        }
+                        ch=getc(mem_point);
+                    }
+                    rewind(mem_point);
+                    j=1;
+
+                    do {
+                        if (flag==0) {
+                            flag=1;
+                        }
+                        else {
+                            printf("Valore fornito non è una riga nel file\n");
+                        }
+                        
+                        canc=acq_int(5);
+                    } while(canc>N);
+
+                    temp_point = fopen (file_temp, "w");
+                    if (temp_point==NULL) {
+                        printf("Errore nell'apertura del file temporaneo\n");
+                        break;
+                    }
+
+                    ch=getc(mem_point);
+                    while (ch!=EOF) {
+                        if (j!=canc) {
+                            putc(ch, temp_point);
+                        }
+                        else {
+                            flag=2;
+                        }
+
+                        if (ch=='\n') {
+                            j++;
+                        }
+                        
+                        ch=getc(mem_point);
+                    }
+
+                    if (flag=2) {
+                        fclose(mem_point);
+                        fclose(temp_point);
+                        remove(file_memoria);
+                        rename(file_temp, file_memoria);
+                        N--;
+
+                        printf("Cancellazione andata a buon fine: è stata cancellata correttamente la riga %d\n", canc);
+                    }
+                    else {
+                        printf("Cancellazione fallita, è stato mantenuto il file originale\n");
+                    }
+                }
+                else {
+                    printf("File \"%s\" è vuoto: non c'è nessun valore da cancellare\n", file_memoria);
+                }
+
+                linee();
+            }
+            break;
+
+            case 3: {
                 int nuovo, flag=0; 
 
                 while (1) {
@@ -291,7 +396,7 @@ int main () {
             }
             break;
 
-            case 3: {
+            case 4: {
                 char salva;
                 
                 if (N==dim) {
@@ -310,17 +415,17 @@ int main () {
 
                 salva=acq_char(2);
                 if (salva=='Y') {
-                    file_point = fopen (file_memoria, "w");
-                    if (file_point==NULL) {
+                    mem_point = fopen (file_memoria, "w");
+                    if (mem_point==NULL) {
                         printf("Errore nell'apertura del file\n");
                         break;
                     }
                 
                     for (i=0; i<N; i++) {
-                        fprintf(file_point, "%d %s %f %f\n", M[i].codice, M[i].scopo, M[i].tensione, M[i].corrente);
+                        fprintf(mem_point, "%d %s %f %f\n", M[i].codice, M[i].scopo, M[i].tensione, M[i].corrente);
                     }
 
-                    fclose(file_point);
+                    fclose(mem_point);
                     printf("Informazioni delle macchine salvate correttamente su \"%s\"\n", file_memoria);
                 }
 
@@ -328,7 +433,7 @@ int main () {
             }
             break;
 
-            case 4: {
+            case 5: {
                 float max, potenza;
 
                 for (i=0; i<N; i++) {
@@ -354,19 +459,8 @@ int main () {
                 linee();
             }
             break;
-
-            case 0: {
-                printf("Ci sono un totale di %d macchine\n", N);
-                
-                for (i=0; i<N; i++) {
-                    printf("MACCHINA %d\n - Codice: %d\n - Scopo: %s\n - Tensione = %f V\n - Corrente = %f A\n", i+1, M[i].codice, M[i].scopo, M[i].tensione, M[i].corrente);
-                }
-
-                linee();
-            }
-            break;
         }
-    } while (scelta!=5);
+    } while (scelta!=6);
 
     return 0;
 }
