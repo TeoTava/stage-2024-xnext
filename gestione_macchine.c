@@ -89,7 +89,7 @@ void acq_string_struct(macchina *M, int i, int mess) {
         default: printf("Fornisci una stringa\n");
     }
 
-    scanf("%s", M[i].scopo);
+    scanf("%s", (M+i)->scopo);
 }
 
 void acq_string(char *x, int mess) {
@@ -207,10 +207,10 @@ void bubble_sort(macchina *M, int N, int *contr_sort) {
 
         //controllo tutte le macchine che potrebbero non essere modificate
         for (j=0; j<N-i-1; j++) {
-            if (M[j].codice>M[j+1].codice) {
-                temp=M[j];
-                M[j]=M[j+1];
-                M[j+1]=temp;
+            if ((M+j)->codice>(M+(j+1))->codice) {
+                temp=*(M+j);
+                *(M+j)=*(M+(j+1));
+                *(M+(j+1))=temp;
 
                 scambio=1;
                 (*contr_sort)=1;
@@ -235,11 +235,11 @@ int binary_seach (macchina *M, int N, int codice) {
         mid=(high+low)/2;
 
         // se questo è vero, allora abbiamo trovato ciò che cercavamo
-        if (M[mid].codice==codice) {
+        if ((M+mid)->codice==codice) {
             return mid;
         }
         // se questo è vero, allora il valore medio è più grande di quello che cerchiamo e quindi eliminiamo dai valori possibili tutta la metà sopra il valore medio
-        else if (M[mid].codice>codice) {
+        else if ((M+mid)->codice>codice) {
             high=mid-1;
         }
         // se no il valore medio è più piccolo di quello che cerchiamo e quindi eliminiamo dai valori possibili tutta la metà sotto il valore medio
@@ -263,7 +263,7 @@ void salvataggio_file (macchina *M, int N, char *file_memoria, FILE **mem_point)
                 
     // copio le info delle macchine nel file in un modo preciso
     for (int i=0; i<N; i++) {
-        fprintf(*mem_point, "%d %s %f %f\n", M[i].codice, M[i].scopo, M[i].tensione, M[i].corrente);
+        fprintf(*mem_point, "%d %s %f %f\n", (M+i)->codice, (M+i)->scopo, (M+i)->tensione, (M+i)->corrente);
     }
 
     // chiudo il file
@@ -281,7 +281,7 @@ void visual_codici_if_Y(macchina *M, int N) {
     if (vis=='Y') {
         printf("Ecco tutti i codici disponibili:\n");
             for (i=0; i<N; i++) {
-                printf(" - %d\n", M[i].codice);
+                printf(" - %d\n", (M+i)->codice);
             }
     }
 }
@@ -289,25 +289,25 @@ void visual_codici_if_Y(macchina *M, int N) {
 // ramificazione della funzione "modifica_campo_struct" per la modifica dello scopo
 void modifica_scopo(macchina *M, int N, int i) {
     // modifico direttamente la stringa
-    acq_string(M[i].scopo, 0);
+    acq_string((M+i)->scopo, 0);
 
-    printf("Modifica del campo \"scopo\" della macchina con codice \"%d\" effettuata con successo\n", M[i].codice);
+    printf("Modifica del campo \"scopo\" della macchina con codice \"%d\" effettuata con successo\n", (M+i)->codice);
 }
 
 // ramificazione della funzione "modifica_campo_struct" per la modifica della tensione
 void modifica_tensione(macchina *M, int N, int i) {
     // modifico direttamente il numero
-    M[i].tensione=acq_float(4);
+    (M+i)->tensione=acq_float(4);
 
-    printf("Modifica del campo \"tensione\" della macchina con codice \"%d\" effettuata con successo\n", M[i].codice);
+    printf("Modifica del campo \"tensione\" della macchina con codice \"%d\" effettuata con successo\n", (M+i)->codice);
 }
 
 // ramificazione della funzione "modifica_campo_struct" per la modifica della corrente
 void modifica_corrente(macchina *M, int N, int i) {
     // modifico direttamente il numero
-    M[i].corrente=acq_float(4);
+    (M+i)->corrente=acq_float(4);
 
-    printf("Modifica del campo \"corrente\" della macchina con codice \"%d\" effettuata con successo\n", M[i].codice);
+    printf("Modifica del campo \"corrente\" della macchina con codice \"%d\" effettuata con successo\n", (M+i)->codice);
 }
 
 // funzione per modificare un campo a scelta
@@ -389,7 +389,7 @@ int main () {
                 }
 
                 // continuo a copiare ciò che ho nel file nel vettore fino a che non c'è più nulla da copiare (fscanf ha return value di quante variabili copia)
-                while (fscanf(mem_point, "%d %s %f %f", &M[i].codice, M[i].scopo, &M[i].tensione, &M[i].corrente)==elementi_struct) {
+                while (fscanf(mem_point, "%d %s %f %f", &(M+i)->codice, (M+i)->scopo, &(M+i)->tensione, &(M+i)->corrente)==elementi_struct) {
                     i++;
                     N++;
                 }
@@ -423,10 +423,10 @@ int main () {
                 for (i=0; i<N; i++) {
                     printf("MACCHINA NUMERO %d\n", i+1);
 
-                    M[i].codice=acq_int(2);
+                    (M+i)->codice=acq_int(2);
                     acq_string_struct(M, i, 0);
-                    M[i].tensione=acq_float(0);
-                    M[i].corrente=acq_float(1);
+                    (M+i)->tensione=acq_float(0);
+                    (M+i)->corrente=acq_float(1);
                 }
 
                 linee();
@@ -464,7 +464,7 @@ int main () {
                 printf("Ci sono un totale di %d macchine\n", N);
                 
                 for (i=0; i<N; i++) {
-                    printf("MACCHINA %d\n - Codice: %d\n - Scopo: %s\n - Tensione = %f V\n - Corrente = %f A\n", i+1, M[i].codice, M[i].scopo, M[i].tensione, M[i].corrente);
+                    printf("MACCHINA %d\n - Codice: %d\n - Scopo: %s\n - Tensione = %f V\n - Corrente = %f A\n", i+1, (M+i)->codice, (M+i)->scopo, (M+i)->tensione, (M+i)->corrente);
                 }
 
                 linee();
@@ -568,8 +568,8 @@ int main () {
                         // devo anche cancellare nel programma la riga che volevo eliminare, non solamente a livello di file
                         for (i=0; i<N; i++) {
                             if (canc==i+1) {
-                                for (j=0; j<N-1; j++) {
-                                    M[j]=M[j+1];
+                                for (j=i; j<N-1; j++) {
+                                    *(M+j)=*(M+(j+1));
                                 }
                             }
                         }
@@ -613,8 +613,8 @@ int main () {
                         visual_codici_if_Y(M, N);
                     }
                     else {
-                        printf("Informazioni richieste:\n - Tensione = %f V\n - Corrente = %f A\n", M[i].tensione, M[i].corrente);
-                        printf("Altre informazioni sulla macchina:\n - Codice: %d\n - Scopo: %s\n", M[i].codice, M[i].scopo);
+                        printf("Informazioni richieste:\n - Tensione = %f V\n - Corrente = %f A\n", (M+i)->tensione, (M+i)->corrente);
+                        printf("Altre informazioni sulla macchina:\n - Codice: %d\n - Scopo: %s\n", (M+i)->codice, (M+i)->scopo);
                         
                         // quando viene fornito il codice, esco dal ciclo infinito
                         break;
@@ -635,10 +635,10 @@ int main () {
                 }
                 // se posso aggiungere una macchina nuova, chiedo tutte le caratteristiche
                 else {
-                    M[N].codice=acq_int(3);
+                    (M+N)->codice=acq_int(3);
                     acq_string_struct(M, N, 1);
-                    M[N].tensione=acq_float(2);
-                    M[N].corrente=acq_float(3);
+                    (M+N)->tensione=acq_float(2);
+                    (M+N)->corrente=acq_float(3);
 
                     N++;
                 }
@@ -671,7 +671,7 @@ int main () {
 
                 // cerco qual'è il valore max di potenza
                 for (i=0; i<N; i++) {
-                    potenza=M[i].tensione*M[i].corrente;
+                    potenza=(M+i)->tensione*(M+i)->corrente;
                     
                     if (i==0) {
                         max=potenza;
@@ -684,10 +684,10 @@ int main () {
                 // mostro le infomazioni delle sole macchine con potenza uguale a quella max
                 printf("Elenco codici macchine con potenza massima (di %f W):\n", max);
                 for (i=0; i<N; i++) {
-                    potenza=M[i].tensione*M[i].corrente;
+                    potenza=(M+i)->tensione*(M+i)->corrente;
                     if (potenza==max) {
-                        printf(" - Codice: %d\n", M[i].codice);
-                        printf("    - Scopo: %s\n    - Tensione: %f V\n    - Corrente: %f A\n", M[i].scopo, M[i].tensione, M[i].corrente);
+                        printf(" - Codice: %d\n", (M+i)->codice);
+                        printf("    - Scopo: %s\n    - Tensione: %f V\n    - Corrente: %f A\n", (M+i)->scopo, (M+i)->tensione, (M+i)->corrente);
                     }
                 }
 
