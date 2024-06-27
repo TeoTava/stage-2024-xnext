@@ -16,7 +16,5 @@
 - [ ] Issue #1
 - [ ] Issue #2
 
-### Cose extra
+# Cose extra
 - [ ] Organizzare meglio il programma aggiungendo più funzioni e sistemando il main
-
-# controlla ciò che c'è di sbagliato nel copy_lista_su_programma (USA L'IDEA DEL FLAG???)
