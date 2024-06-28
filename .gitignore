@@ -1,11 +1,11 @@
 # sono ELFS ovvero gli EXE di Linux
 gestione_macchine
-hello_world
 ARRAY_gestione_macchine
 LIST_gestione_macchine
 
 # non serve salvarla
 .vscode/
 
-# non ho idea di cosa sia ma è eseguibile penso, quindi chissene :)
+# probabilmente file che servono poi nella compilazione da terminale (o che si sono creati per errore)
 a.out
+O0

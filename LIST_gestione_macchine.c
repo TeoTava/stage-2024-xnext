@@ -5,12 +5,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-// definisco un tipo "Macchina" in modo da non dover scrivere sempre "struct Macchina"
-typedef struct Macchina {
-    int codice;
-    char scopo[25];
-    float tensione, corrente;
-} Macchina;
+// questo prende dall'header file "struct_Macchine.h" la definizione della struttura, in modo che posso usarla anche per l'altro file .c dato che tanto sono identiche le definizioni
+#include "struct_Macchine.h"
 
 // definisco un tipo "Nodo" perchè mi serve quando uso la lista e non gli array
 typedef struct Nodo {
@@ -49,6 +45,8 @@ int acq_int (int mess) {
         case 1: printf("Fornisci codice della macchina [numero intero]\n");
         break;
         case 2: printf("Scegliere tra le seguenti opzioni:\n1. Riprendere le macchine precedentemente salvate nella memoria\n2. Inserire macchine da zero\n");
+        break;
+        case 3: printf("Fornisci la riga da cancellare dal file [numero intero]\n");
         break;
         default: printf("Fornisci un valore intero\n");
     }
@@ -136,6 +134,8 @@ char acq_char (int mess) {
     switch (mess) {
         case 0: printf("Vuoi aggiungere un'altra macchina? [Y/N]\n");
         break;
+        case 1: printf("Vuoi visualizzare tutti i codici possibili? [Y/N]\n");
+        break;
         default: printf("Fornisci un carattere letterale\n");
     }
 
@@ -152,7 +152,7 @@ char acq_char (int mess) {
             }
             // devo controllare se sono effettivamente le lettere che voglio in certi casi
             else {
-                if (mess==0) {
+                if (mess==0 || mess==1) {
                     if (x!='y' && x!='Y' && x!='n' && x!='N') {
                         printf("Inserire valore valido: non è stata inserita una scelta possibile\n");
                     }
@@ -233,6 +233,7 @@ Nodo* copy_lista_su_programma (char *nome_file, int elementi_struct, int *N, int
     return testa;
 }
 
+// funzione per aggiungere alla lista presente nel programma un certo numero non definito di macchine
 Nodo* inserimento_macchine_su_lista (int *N) {
     char ins='Y';
     Macchina nuova_macchina;
@@ -242,6 +243,7 @@ Nodo* inserimento_macchine_su_lista (int *N) {
     Nodo* ultimo=NULL;
 
     while (ins=='Y') {
+        // acquisisco le varie informazioni della struct
         printf("MACCHINA %d:\n", (*N)+1);
         
         nuova_macchina.codice=acq_int(1);
@@ -272,12 +274,14 @@ Nodo* inserimento_macchine_su_lista (int *N) {
             ultimo=nuovo_nodo;
         }
 
+        // prendo un nuovo valore in modo da poter prendere infinite macchine fino a che l'utente non inserisce 'N'
         ins=acq_char(0);
     }
 
     return testa;
 }
 
+// ramificazione della funzione "bubble_sort", serve per scambiare l'ordine dei nodi
 Nodo* scambia (Nodo* p1, Nodo* p2) {
     Nodo* temp=p2->next;
     p2->next=p1;
@@ -286,6 +290,7 @@ Nodo* scambia (Nodo* p1, Nodo* p2) {
     return p2;
 }
 
+// algoritmo di Bubble Sorting per le liste (è uguale il concetto a quello degli array, cambia solo la sintassi e il fatto che si lavora non con le posizioni "i" ma con i puntatori)
 void bubble_sort (Nodo** testa, int N, int *contr_sort) {
     Nodo** T;
     int i, j, cambio;
@@ -313,6 +318,7 @@ void bubble_sort (Nodo** testa, int N, int *contr_sort) {
     }
 }
 
+// funzione per salvare dal programma tutte le informazioni acquisite al file "gestione_macchine.txt"
 void salvataggio_file (Nodo* testa, char *nome_file) {
     // apro il file in modalità "write"
     FILE* file=fopen(nome_file, "w");
@@ -333,6 +339,7 @@ void salvataggio_file (Nodo* testa, char *nome_file) {
     printf("Elementi salvati in \"%s\" correttamente\n", nome_file);
 }
 
+// funzione per visualizzare tutti i campi della lista
 void stampa_lista (Nodo* testa) {
     Nodo* current=testa;
     int i=1;
@@ -344,13 +351,261 @@ void stampa_lista (Nodo* testa) {
     }
 }
 
+// prima parte della cancellazione dove si vedono tutte le macchine con le righe e bisogna effettuare la scelta di quale riga cancellare
+int visualizzazione_pre_cancellazione (int N, FILE *point, char *nome_file) {
+    char ch;
+    int canc, j=1, flag=0;
+    float grand_file;
+
+    // apro il file in modalità "read"
+    point = fopen (nome_file, "r");
+    if (point==NULL) {
+        printf("Errore nell'apertura del file\n");
+        return -2;
+    }
+                
+    // guardo quanto effettivamente grande è il file che ho
+    fseek(point, 0, SEEK_END);
+    grand_file=ftell(point);
+    rewind(point);
+
+    // se il file dentro di sè ha qualche macchina, allora ha senso mostrare i contenuti di tale file
+    if (grand_file!=0) {
+        printf("Contenuto attuale del file \"%s\" (numero all'inizio indica la riga del file, in ordine i valori sono per ogni macchina: codice, scopo, tensione, corrente):\n", nome_file);
+        printf("%d)   ", j);
+        j++;
+        //faccio girare tutto il file printando lettera per lettera i suoi contenuti fino alla End-of-File (EOF)
+        ch=getc(point);
+        while (ch!=EOF) {
+            if (j>N && ch=='\n') {
+                printf("%c", ch);
+            }
+            else if (ch=='\n') {
+                printf("\n%d)   ", j);
+                j++;
+            }
+            else {
+                printf("%c", ch);
+            }
+            ch=getc(point);
+        }
+
+        // mi faccio fornire la riga del file (quindi effettivamente la macchina) che l'utente vuole cancellare
+        do {
+            if (flag==0) {
+                flag=1;
+            }
+            else {
+                printf("Valore fornito non è una riga nel file\n");
+            }
+                        
+            canc=acq_int(3);
+        } while(canc>N);
+        
+        // chiudo il file ora anche se poi dovrò riaprirlo nella funzione dopo
+        fclose(point);
+        return canc;
+    }
+    else {
+        return -1;
+    }
+}
+
+// funzione dove avviene la cancellazione effettiva dell'elemento dal file
+void cancellazione_da_lista (Nodo** testa, FILE *point, char *nome_file, int canc, int *N) {
+    char file_temp[9] = "temp.txt", ch, scopo[25];
+    int j=1, flag=0, codice;
+    float tensione, corrente;
+    
+    // riapro il file in modalità "read"
+    point = fopen (nome_file, "r");
+    if (point==NULL) {
+        printf("Errore nell'apertura del file\n");
+        return;
+    }
+
+    // apro il file temporaneo in modalità "write"
+    FILE *temp_point = fopen (file_temp, "w");
+    if (temp_point==NULL) {
+        printf("Errore nell'apertura del file temporaneo\n");
+        return;
+    }
+
+    // vado lettera per lettera attraverso il primo file e copio tutti i contenuti in quello temporaneo a parte per quelli della riga che si vuole cancellare 
+    ch=getc(point);
+    while (ch!=EOF) {
+        if (j!=canc) {
+            putc(ch, temp_point);
+        }
+        else {
+            flag=1;
+        }
+
+        if (ch=='\n') {
+            j++;
+        }
+                        
+        ch=getc(point);
+    }
+
+    // se la cancellazione è stata effettuata, allora entro nell'if
+    if (flag==1) {
+        // chiudo entrambi i file, rimuovo il file originale e rinomino quello temporaneo con il valore cancellato con lo stesso nome dell'originale 
+        fclose(point);
+        fclose(temp_point);
+        remove(nome_file);
+        rename(file_temp, nome_file);
+
+        j=0;
+
+        // inizio la cancellazione nel programma dichiarando i nodi che mi servono
+        Nodo* temp=*testa;
+        Nodo* prima=NULL;
+
+        // svolgo questo passaggio nel caso il valore richiesto è in testa
+        if (temp!=NULL && canc==j) {
+            *testa=temp->next;
+            free(temp);
+        }
+        else {
+            j=1;
+
+            // cerco che nodo della lista che voglio eliminare leggendoli in ordine e comparando quanti nodi sono andato avanti con il valore della riga del file che l'utente aveva fornito
+            while (temp!=NULL && j<canc) {
+                prima=temp;
+                temp=temp->next;
+                j++;
+            }
+        
+            // cancello saltando il nodo non voluto e poi liberando la memoria che occupava
+            /*
+                esempio:
+                A -> B -> C -> D -> NULL
+            
+                voglio cancellare B, quindi faccio:
+                A -> C -> D -> NULL
+
+                dove si avrà nel momento di cancellazione: 
+                - A = prima
+                - B = temp / prima->next
+                - C = temp->next
+            */
+            prima->next=temp->next;
+            free(temp);
+            (*N)--;
+        }
+
+        printf("Cancellazione andata a buon fine: è stata cancellata correttamente la riga %d\n", canc);
+        printf("Informazioni delle macchine salvate correttamente su \"%s\"\n", nome_file);
+    }
+    // se la cancellazione non è stata effettuata, allora tengo tutto come se nulla fosse successo
+    else {
+        printf("Cancellazione fallita, è stato mantenuto il file originale\n");
+        remove(file_temp);
+    }
+}
+
+// ramificazione della funzione "ricerca_binaria", serve per fornire all'algoritmo l'effettivo valore che si trova nella posizione centrale della lista
+Nodo* nodo_in_centro(Nodo* testa, int mid) {
+    int i=0;
+    while (testa != NULL && i<mid) {
+        testa=testa->next;
+        i++;
+    }
+    return testa;
+}
+
+// algoritmo di Ricerca Dicotomica, come per il Bubble Sort il concetto è uguale però si lavora in modo diverso dato che si usano le liste
+Nodo* ricerca_binaria (Nodo* testa, int N, int codice) {
+    int low=0, high=N-1, mid;
+
+    // il while del do-while controlla se effettivamente il codice dato esiste, ma mentre cerca gira all'infinito diminuendo sempre più la finestra dei valori possibili
+    do {
+        mid=(high+low)/2;
+        Nodo* nodo_centrale=nodo_in_centro(testa, mid);
+
+        // Caso di errore
+        if (nodo_centrale == NULL) {
+            return NULL;
+        }
+        
+        // se questo è vero, allora abbiamo trovato ciò che cercavamo
+        if (nodo_centrale->dati.codice==codice) {
+            return nodo_centrale;
+        }
+        // se questo è vero, allora il valore medio è più grande di quello che cerchiamo e quindi eliminiamo dai valori possibili tutta la metà sopra il valore medio
+        else if (nodo_centrale->dati.codice>codice) {
+            high=mid-1;
+        }
+        // se no il valore medio è più piccolo di quello che cerchiamo e quindi eliminiamo dai valori possibili tutta la metà sotto il valore medio
+        else {
+            low=mid+1;
+        }
+    } while(low<=high);
+
+    // nel caso di codice inesistente
+    return NULL;
+}
+
+// funzione che permette di visualizzare tutti i codici se viene fornita la scelta 'Y' dall'utente
+void visual_codici_if_Y(Nodo* testa) {
+    int i=0;
+    char vis;
+    
+    vis=acq_char(1);
+    if (vis=='Y') {
+        printf("Ecco tutti i codici disponibili:\n");
+        Nodo* current=testa;
+        while (current!=NULL) {
+            printf(" - %d\n", current->dati.codice);
+            current=current->next;
+        }
+    }
+}
+
+// funzione che stampa i vari campi della macchina indicando anche in che posizione della lista si trovava tale macchina
+void stampa_numero_e_elementi (Nodo* testa, Nodo* elemento) {
+    int i=1;
+    Nodo* current=testa;
+    
+    while (current!=NULL) {
+        if (current->dati.codice==elemento->dati.codice) {
+            printf("MACCHINA NUMERO %d NELLA LISTA\n", i);
+            break;
+        }
+        else {
+            i++;
+            current=current->next;
+        }
+    }
+
+    printf("Informazioni macchina:\n - Codice: %d\n - Scopo: %s\n - Tensione = %f V\n - Corrente = %f A\n", elemento->dati.codice, elemento->dati.scopo, elemento->dati.tensione, elemento->dati.corrente);
+}
+
+
+
+
+// funzione finale che permette di deallocare la memoria prima allocata a fine programma, in modo da completare in modo corretto la chiusura senza problemi
+void deallocazione (Nodo* testa) {
+    Nodo* current=testa;
+
+    while (testa!=NULL) {
+        current=testa;
+        testa=testa->next;
+        free(current);
+    }
+
+    printf("Deallocazione effettuata con successo\n");
+}
+
+
 
 int main () {
     int scelta, N, i=0, controllo=0, elementi_struct=4, contr_sort=0;
 
     Nodo* Lista = NULL;
 
-    FILE *mem_point;
+    FILE *point;
     char file_memoria[21]="memoria_macchine.txt", sort_save;
 
     // loop per acquisizione iniziale delle macchine
@@ -410,6 +665,9 @@ int main () {
     }
     else {
         printf("Ordinamento non ha portato ulteriori modifiche\n");
+
+        salvataggio_file(Lista, file_memoria);
+
         linee();
     }
 
@@ -436,8 +694,53 @@ int main () {
                 salvataggio_file(Lista, file_memoria);
             }
             break;
+
+            case 2: {
+                /* CANCELLARE UNA MACCHINA A SCELTA DALLA MEMORIA */
+                int canc=visualizzazione_pre_cancellazione(N, point, file_memoria);
+                
+                if (canc==-1) {
+                    printf("Cancellazione impossibile: il file non ha niente al suo interno\n");
+                    fclose(point);
+                }
+                else {
+                    cancellazione_da_lista(&Lista, point, file_memoria, canc, &N);
+                }
+
+                linee();
+            }
+            break;
+
+            case 3: {
+                /* VISUALIZZARE I DATI DI UNA MACCHINA FORNENDO IL CODICE */
+                while (1) {
+                    int codice=acq_int(1);
+
+                    Nodo* nodo_ricerca=ricerca_binaria(Lista, N, codice);
+                    if (nodo_ricerca==NULL) {
+                        printf("Codice fornito non è uno che è presente tra i codici della lista\n");
+
+                        // se non è stato dato un codice esistente, allora chiedo se si vuole vedere tutti i possibili codici
+                        visual_codici_if_Y(Lista);
+                    }
+                    else {
+                        stampa_numero_e_elementi(Lista, nodo_ricerca);
+                        break;
+                    }
+                }
+
+                linee();
+            }
+            break;
+
         }
     } while (scelta!=7);
+
+    printf("Deallocazione di memoria della lista in corso...\n");
+    deallocazione(Lista);
+    
+    printf("\nChiusura del programma in corso...\n");
+    linee();
 
     return 0;
 }
